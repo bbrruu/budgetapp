@@ -6,16 +6,21 @@ import { formatDateShort } from '../storage';
 interface Props {
   item: Transaction;
   onDelete?: (id: string) => void;
+  onEdit?: (tx: Transaction) => void;
 }
 
-export default function TransactionItem({ item, onDelete }: Props) {
+export default function TransactionItem({ item, onDelete, onEdit }: Props) {
   const cats = item.type === 'expense' ? EXPENSE_CATS : INCOME_CATS;
-  const cat = cats.find(c => c.key === item.category) ?? { icon: '💸', color: '#999' };
+  const cat = cats.find(c => c.key === item.category) ?? { icon: '💸', color: '#9CA3AF' };
   const isIncome = item.type === 'income';
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.iconBg, { backgroundColor: cat.color + '28' }]}>
+    <TouchableOpacity
+      style={styles.container}
+      onPress={() => onEdit?.(item)}
+      activeOpacity={onEdit ? 0.7 : 1}
+    >
+      <View style={[styles.iconBg, { backgroundColor: cat.color + '20' }]}>
         <Text style={styles.icon}>{cat.icon}</Text>
       </View>
       <View style={styles.info}>
@@ -35,7 +40,7 @@ export default function TransactionItem({ item, onDelete }: Props) {
           <Text style={styles.deleteTxt}>✕</Text>
         </TouchableOpacity>
       )}
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -47,25 +52,27 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 14,
     marginVertical: 4,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.04,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 1,
   },
   iconBg: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  icon: { fontSize: 22 },
+  icon: { fontSize: 21 },
   info: { flex: 1, marginLeft: 12 },
   category: { fontSize: 15, fontWeight: '600', color: COLORS.text },
   note: { fontSize: 12, color: COLORS.muted, marginTop: 2 },
   right: { alignItems: 'flex-end' },
-  amount: { fontSize: 16, fontWeight: '700' },
+  amount: { fontSize: 15, fontWeight: '700' },
   date: { fontSize: 12, color: COLORS.muted, marginTop: 3 },
   deleteBtn: { marginLeft: 12, padding: 4 },
   deleteTxt: { fontSize: 13, color: COLORS.muted },

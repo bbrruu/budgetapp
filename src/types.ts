@@ -17,32 +17,32 @@ export interface Category {
 }
 
 export const EXPENSE_CATS: Category[] = [
-  { key: '餐飲', icon: '🍜', color: '#FF6B6B' },
-  { key: '交通', icon: '🚌', color: '#48CAE4' },
-  { key: '購物', icon: '🛍️', color: '#9B5DE5' },
-  { key: '娛樂', icon: '🎮', color: '#F15BB5' },
-  { key: '住宿', icon: '🏠', color: '#F4A261' },
-  { key: '醫療', icon: '💊', color: '#00BBF9' },
-  { key: '教育', icon: '📚', color: '#06D6A0' },
-  { key: '其他', icon: '📦', color: '#B0B0B0' },
+  { key: '餐飲', icon: '🍜', color: '#FB923C' },
+  { key: '交通', icon: '🚌', color: '#60A5FA' },
+  { key: '購物', icon: '🛍️', color: '#A78BFA' },
+  { key: '娛樂', icon: '🎮', color: '#F472B6' },
+  { key: '住宿', icon: '🏠', color: '#FBBF24' },
+  { key: '醫療', icon: '💊', color: '#34D399' },
+  { key: '教育', icon: '📚', color: '#6366F1' },
+  { key: '其他', icon: '📦', color: '#9CA3AF' },
 ];
 
 export const INCOME_CATS: Category[] = [
-  { key: '薪資', icon: '💼', color: '#2ECC71' },
-  { key: '兼職', icon: '💻', color: '#3498DB' },
-  { key: '投資', icon: '📈', color: '#F39C12' },
-  { key: '禮金', icon: '🎁', color: '#E91E63' },
-  { key: '其他', icon: '💰', color: '#95A5A6' },
+  { key: '薪資', icon: '💼', color: '#10B981' },
+  { key: '兼職', icon: '💻', color: '#6366F1' },
+  { key: '投資', icon: '📈', color: '#F59E0B' },
+  { key: '禮金', icon: '🎁', color: '#EC4899' },
+  { key: '其他', icon: '💰', color: '#94A3B8' },
 ];
 
 export const COLORS = {
-  bg: '#F5F3EE',
-  card: '#FFFFFF',
-  income: '#27AE60',
-  expense: '#E74C3C',
-  text: '#2C3E50',
-  muted: '#7F8C8D',
-  border: '#E8E4DC',
-  accent: '#3498DB',
-  dark: '#1A252F',
+  bg:      '#FAFAF9',
+  card:    '#FFFFFF',
+  income:  '#10B981',
+  expense: '#EF4444',
+  text:    '#111827',
+  muted:   '#6B7280',
+  border:  '#F3F4F6',
+  accent:  '#6366F1',
+  dark:    '#111827',
 };

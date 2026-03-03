@@ -21,7 +21,6 @@ export default function AddScreen() {
   const [date, setDate] = useState(new Date());
 
   const cats = type === 'expense' ? EXPENSE_CATS : INCOME_CATS;
-  const accent = type === 'expense' ? COLORS.expense : COLORS.income;
 
   const reset = () => {
     setAmount('');
@@ -51,7 +50,7 @@ export default function AddScreen() {
       createdAt: new Date().toISOString(),
     };
     await saveTransaction(tx);
-    Alert.alert('✅ 記帳完成', `${type === 'expense' ? '支出' : '收入'} NT$${num.toLocaleString()} 已儲存`, [
+    Alert.alert('記帳完成', `${type === 'expense' ? '支出' : '收入'} NT$${num.toLocaleString()} 已儲存`, [
       { text: '繼續記帳', onPress: reset },
     ]);
   };
@@ -66,12 +65,12 @@ export default function AddScreen() {
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>新增記帳</Text>
 
-        {/* Type Toggle */}
+        {/* Type Toggle — Pill Segmented Control */}
         <View style={styles.toggleWrap}>
           {(['expense', 'income'] as TxType[]).map(t => (
             <TouchableOpacity
               key={t}
-              style={[styles.toggleBtn, type === t && { backgroundColor: t === 'expense' ? COLORS.expense : COLORS.income }]}
+              style={[styles.toggleBtn, type === t && styles.toggleBtnActive]}
               onPress={() => handleTypeChange(t)}
             >
               <Text style={[styles.toggleTxt, type === t && styles.toggleActiveTxt]}>
@@ -82,12 +81,12 @@ export default function AddScreen() {
         </View>
 
         {/* Amount Input */}
-        <View style={[styles.amountCard, { borderTopColor: accent }]}>
+        <View style={styles.amountCard}>
           <Text style={styles.amountHint}>金額（NT$）</Text>
           <View style={styles.amountRow}>
-            <Text style={[styles.currency, { color: accent }]}>$</Text>
+            <Text style={[styles.currency, { color: COLORS.accent }]}>$</Text>
             <TextInput
-              style={[styles.amountInput, { color: accent }]}
+              style={[styles.amountInput, { color: COLORS.accent }]}
               value={amount}
               onChangeText={setAmount}
               keyboardType="decimal-pad"
@@ -110,12 +109,16 @@ export default function AddScreen() {
                   key={cat.key}
                   style={[
                     styles.catBtn,
-                    selected && { backgroundColor: cat.color + '28', borderColor: cat.color, borderWidth: 2 },
+                    selected && {
+                      backgroundColor: COLORS.accent + '18',
+                      borderColor: COLORS.accent,
+                      borderWidth: 2,
+                    },
                   ]}
                   onPress={() => setCategory(cat.key)}
                 >
                   <Text style={styles.catIcon}>{cat.icon}</Text>
-                  <Text style={[styles.catLabel, selected && { color: cat.color, fontWeight: '700' }]}>
+                  <Text style={[styles.catLabel, selected && { color: COLORS.accent, fontWeight: '700' }]}>
                     {cat.key}
                   </Text>
                 </TouchableOpacity>
@@ -148,7 +151,7 @@ export default function AddScreen() {
 
         {/* Save Button */}
         <TouchableOpacity
-          style={[styles.saveBtn, { backgroundColor: accent }]}
+          style={styles.saveBtn}
           onPress={handleSave}
           activeOpacity={0.85}
         >
@@ -161,21 +164,40 @@ export default function AddScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.bg },
-  content: { padding: 20, paddingBottom: 48 },
-  title: { fontSize: 24, fontWeight: '800', color: COLORS.text, marginBottom: 20 },
+  content: { padding: 20, paddingBottom: 100 },
+  title: { fontSize: 26, fontWeight: '800', color: COLORS.text, marginBottom: 20 },
 
   toggleWrap: {
-    flexDirection: 'row', backgroundColor: COLORS.card, borderRadius: 14,
-    padding: 4, marginBottom: 20,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
+    flexDirection: 'row',
+    backgroundColor: COLORS.card,
+    borderRadius: 14,
+    padding: 4,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
   },
   toggleBtn: { flex: 1, paddingVertical: 11, borderRadius: 11, alignItems: 'center' },
+  toggleBtnActive: { backgroundColor: COLORS.accent },
   toggleTxt: { fontSize: 16, fontWeight: '600', color: COLORS.muted },
   toggleActiveTxt: { color: '#fff' },
 
   amountCard: {
-    backgroundColor: COLORS.card, borderRadius: 16, padding: 20, marginBottom: 24, borderTopWidth: 4,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
+    backgroundColor: COLORS.card,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   amountHint: { fontSize: 12, color: COLORS.muted, marginBottom: 8 },
   amountRow: { flexDirection: 'row', alignItems: 'center' },
@@ -187,23 +209,47 @@ const styles = StyleSheet.create({
 
   catGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   catBtn: {
-    width: '22%', aspectRatio: 1, backgroundColor: COLORS.card, borderRadius: 14,
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 1,
+    width: '22%',
+    aspectRatio: 1,
+    backgroundColor: COLORS.card,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
   },
   catIcon: { fontSize: 24, marginBottom: 4 },
   catLabel: { fontSize: 11, color: COLORS.text, fontWeight: '500' },
 
   fieldRow: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.card,
-    borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.card,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   fieldIcon: { fontSize: 18, marginRight: 12 },
   noteInput: { flex: 1, fontSize: 15, color: COLORS.text, padding: 0 },
 
   saveBtn: {
-    borderRadius: 16, paddingVertical: 17, alignItems: 'center', marginTop: 8,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 10, elevation: 5,
+    backgroundColor: COLORS.accent,
+    borderRadius: 14,
+    paddingVertical: 17,
+    alignItems: 'center',
+    marginTop: 8,
+    shadowColor: COLORS.accent,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 5,
   },
   saveTxt: { fontSize: 18, fontWeight: '800', color: '#fff', letterSpacing: 0.5 },
 });

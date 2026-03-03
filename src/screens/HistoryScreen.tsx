@@ -8,15 +8,19 @@ import {
   TouchableOpacity,
   Alert,
   ScrollView,
+  TextInput,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { getTransactions, deleteTransaction } from '../storage';
-import { Transaction, COLORS } from '../types';
+import { Transaction, TxType, COLORS } from '../types';
 import TransactionItem from '../components/TransactionItem';
+import EditModal from '../components/EditModal';
 
 interface Group { date: string; txs: Transaction[] }
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
+
+type FilterType = 'all' | TxType;
 
 function groupByDate(txs: Transaction[]): Group[] {
   const map: Record<string, Transaction[]> = {};
@@ -37,6 +41,9 @@ function dateHeader(dateStr: string): string {
 export default function HistoryScreen() {
   const [txs, setTxs] = useState<Transaction[]>([]);
   const [selMonth, setSelMonth] = useState('');
+  const [searchText, setSearchText] = useState('');
+  const [filterType, setFilterType] = useState<FilterType>('all');
+  const [editingTx, setEditingTx] = useState<Transaction | null>(null);
 
   const load = useCallback(async () => {
     const data = await getTransactions();
@@ -63,16 +70,39 @@ export default function HistoryScreen() {
   };
 
   const allMonths = [...new Set(txs.map(t => t.date.slice(0, 7)))].sort((a, b) => b.localeCompare(a));
-  const filtered = selMonth ? txs.filter(t => t.date.startsWith(selMonth)) : txs;
+
+  // Apply month filter
+  let filtered = selMonth ? txs.filter(t => t.date.startsWith(selMonth)) : txs;
+
+  // Apply type filter
+  if (filterType !== 'all') {
+    filtered = filtered.filter(t => t.type === filterType);
+  }
+
+  // Apply search filter
+  if (searchText.trim()) {
+    const q = searchText.trim().toLowerCase();
+    filtered = filtered.filter(t =>
+      t.category.toLowerCase().includes(q) ||
+      t.note.toLowerCase().includes(q)
+    );
+  }
+
   const groups = groupByDate(filtered);
 
   const monthTotalIncome = filtered.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
   const monthTotalExpense = filtered.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
 
   const monthLabel = (m: string) => {
-    const [y, mo] = m.split('-');
+    const [, mo] = m.split('-');
     return `${parseInt(mo)}月`;
   };
+
+  const FILTER_OPTIONS: { key: FilterType; label: string }[] = [
+    { key: 'all', label: '全部' },
+    { key: 'expense', label: '支出' },
+    { key: 'income', label: '收入' },
+  ];
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -94,6 +124,35 @@ export default function HistoryScreen() {
           </ScrollView>
         </View>
       )}
+
+      {/* Search Bar */}
+      <View style={styles.searchWrap}>
+        <Text style={styles.searchIcon}>🔍</Text>
+        <TextInput
+          style={styles.searchInput}
+          value={searchText}
+          onChangeText={setSearchText}
+          placeholder="搜尋類別或備註..."
+          placeholderTextColor={COLORS.muted}
+          returnKeyType="search"
+          clearButtonMode="while-editing"
+        />
+      </View>
+
+      {/* Type Filter Pills */}
+      <View style={styles.filterRow}>
+        {FILTER_OPTIONS.map(opt => (
+          <TouchableOpacity
+            key={opt.key}
+            style={[styles.filterPill, filterType === opt.key && styles.filterPillActive]}
+            onPress={() => setFilterType(opt.key)}
+          >
+            <Text style={[styles.filterTxt, filterType === opt.key && styles.filterTxtActive]}>
+              {opt.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
       {/* Monthly Summary Bar */}
       {filtered.length > 0 && (
@@ -124,6 +183,7 @@ export default function HistoryScreen() {
           data={groups}
           keyExtractor={item => item.date}
           contentContainerStyle={styles.listContent}
+          keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => {
             const dayIncome = item.txs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
             const dayExpense = item.txs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
@@ -137,7 +197,12 @@ export default function HistoryScreen() {
                   </Text>
                 </View>
                 {item.txs.map(tx => (
-                  <TransactionItem key={tx.id} item={tx} onDelete={handleDelete} />
+                  <TransactionItem
+                    key={tx.id}
+                    item={tx}
+                    onDelete={handleDelete}
+                    onEdit={setEditingTx}
+                  />
                 ))}
               </View>
             );
@@ -145,11 +210,20 @@ export default function HistoryScreen() {
           ListEmptyComponent={
             <View style={styles.empty}>
               <Text style={styles.emptyEmoji}>🔍</Text>
-              <Text style={styles.emptyTxt}>這個月沒有記錄</Text>
+              <Text style={styles.emptyTxt}>
+                {searchText ? '找不到符合的記錄' : '這個月沒有記錄'}
+              </Text>
             </View>
           }
         />
       )}
+
+      <EditModal
+        visible={editingTx !== null}
+        transaction={editingTx}
+        onClose={() => setEditingTx(null)}
+        onSaved={load}
+      />
     </SafeAreaView>
   );
 }
@@ -164,30 +238,78 @@ const styles = StyleSheet.create({
   },
   tabs: { paddingHorizontal: 14, paddingVertical: 10, gap: 8 },
   tab: {
-    paddingHorizontal: 18, paddingVertical: 7,
-    borderRadius: 20, backgroundColor: COLORS.bg,
+    paddingHorizontal: 18,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: COLORS.bg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
-  tabActive: { backgroundColor: COLORS.accent },
+  tabActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
   tabTxt: { fontSize: 14, fontWeight: '600', color: COLORS.muted },
   tabActiveTxt: { color: '#fff' },
+
+  searchWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.card,
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  searchIcon: { fontSize: 16, marginRight: 8 },
+  searchInput: { flex: 1, fontSize: 15, color: COLORS.text, padding: 0 },
+
+  filterRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    gap: 8,
+    marginBottom: 8,
+  },
+  filterPill: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: COLORS.card,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  filterPillActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
+  filterTxt: { fontSize: 13, fontWeight: '600', color: COLORS.muted },
+  filterTxtActive: { color: '#fff' },
 
   summaryBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: COLORS.card,
-    paddingVertical: 10,
+    paddingVertical: 8,
+    borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderColor: COLORS.border,
+    marginBottom: 4,
   },
   summaryBarItem: { fontSize: 13, paddingHorizontal: 4 },
   summaryBarDivider: { fontSize: 13, color: COLORS.border, paddingHorizontal: 2 },
 
-  listContent: { padding: 16, paddingBottom: 48 },
+  listContent: { padding: 16, paddingBottom: 100 },
   group: { marginBottom: 18 },
   dateHeader: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    marginBottom: 8, paddingHorizontal: 2,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+    paddingHorizontal: 2,
   },
   dateLabel: { fontSize: 13, fontWeight: '700', color: COLORS.muted },
   dateSums: { fontSize: 13 },

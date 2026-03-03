@@ -17,6 +17,15 @@ export async function saveTransaction(tx: Transaction): Promise<void> {
   await AsyncStorage.setItem(KEY, JSON.stringify([tx, ...list]));
 }
 
+export async function updateTransaction(
+  id: string,
+  updates: Partial<Omit<Transaction, 'id' | 'createdAt'>>
+): Promise<void> {
+  const all = await getTransactions();
+  const updated = all.map(t => (t.id === id ? { ...t, ...updates } : t));
+  await AsyncStorage.setItem(KEY, JSON.stringify(updated));
+}
+
 export async function deleteTransaction(id: string): Promise<void> {
   const list = await getTransactions();
   await AsyncStorage.setItem(KEY, JSON.stringify(list.filter(t => t.id !== id)));

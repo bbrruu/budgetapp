@@ -11,12 +11,14 @@ import { useFocusEffect } from '@react-navigation/native';
 import { getTransactions } from '../storage';
 import { Transaction, COLORS } from '../types';
 import TransactionItem from '../components/TransactionItem';
+import EditModal from '../components/EditModal';
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
 
 export default function OverviewScreen() {
   const [txs, setTxs] = useState<Transaction[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [editingTx, setEditingTx] = useState<Transaction | null>(null);
 
   const load = useCallback(async () => {
     setTxs(await getTransactions());
@@ -46,16 +48,18 @@ export default function OverviewScreen() {
 
   const greeting = () => {
     const h = now.getHours();
-    if (h < 6) return '深夜了 🌙';
-    if (h < 12) return '早安 ☀️';
-    if (h < 14) return '午安 🌤️';
-    if (h < 18) return '下午好 🌤️';
-    return '晚安 🌙';
+    if (h < 6) return '深夜了';
+    if (h < 12) return '早安';
+    if (h < 14) return '午安';
+    if (h < 18) return '下午好';
+    return '晚安';
   };
 
   const progressPct = monthIncome > 0
     ? Math.min(monthExpense / monthIncome, 1)
     : monthExpense > 0 ? 1 : 0;
+
+  const progressColor = progressPct > 0.9 ? COLORS.expense : progressPct > 0.7 ? '#F59E0B' : COLORS.accent;
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -79,7 +83,7 @@ export default function OverviewScreen() {
           <Text style={styles.balanceLabelTop}>總資產餘額</Text>
           <Text style={[
             styles.balanceAmount,
-            { color: totalBalance >= 0 ? '#A8E6CF' : '#FFAAA5' }
+            { color: totalBalance >= 0 ? '#A7F3D0' : '#FCA5A5' }
           ]}>
             NT$ {Math.abs(totalBalance).toLocaleString()}
             {totalBalance < 0 ? ' ↓' : ''}
@@ -90,7 +94,7 @@ export default function OverviewScreen() {
               <Text style={styles.balanceMetaLabel}>本月結餘</Text>
               <Text style={[
                 styles.balanceMetaAmt,
-                { color: monthNet >= 0 ? '#A8E6CF' : '#FFAAA5' }
+                { color: monthNet >= 0 ? '#A7F3D0' : '#FCA5A5' }
               ]}>
                 {monthNet >= 0 ? '+' : '-'}NT${Math.abs(monthNet).toLocaleString()}
               </Text>
@@ -105,7 +109,7 @@ export default function OverviewScreen() {
         {/* Monthly Cards */}
         <View style={styles.row}>
           <View style={[styles.card, styles.halfCard]}>
-            <Text style={styles.cardIcon}>↑</Text>
+            <Text style={[styles.cardIcon, { color: COLORS.income }]}>↑</Text>
             <Text style={styles.cardLabel}>本月收入</Text>
             <Text style={[styles.cardAmt, { color: COLORS.income }]}>
               NT${monthIncome.toLocaleString()}
@@ -125,18 +129,22 @@ export default function OverviewScreen() {
           <View style={styles.card}>
             <View style={styles.barHeader}>
               <Text style={styles.barLabel}>本月花費進度</Text>
-              <Text style={styles.barPct}>{Math.round(progressPct * 100)}%</Text>
+              <Text style={[styles.barPct, { color: progressColor }]}>
+                {Math.round(progressPct * 100)}%
+              </Text>
             </View>
             <View style={styles.barBg}>
               <View style={[
                 styles.barFill,
                 {
                   width: `${Math.round(progressPct * 100)}%` as any,
-                  backgroundColor: progressPct > 0.9 ? COLORS.expense : progressPct > 0.7 ? '#F39C12' : COLORS.income,
+                  backgroundColor: progressColor,
                 }
               ]} />
             </View>
-            <Text style={styles.barSub}>收入 NT${monthIncome.toLocaleString()} / 支出 NT${monthExpense.toLocaleString()}</Text>
+            <Text style={styles.barSub}>
+              收入 NT${monthIncome.toLocaleString()} ／ 支出 NT${monthExpense.toLocaleString()}
+            </Text>
           </View>
         )}
 
@@ -150,10 +158,19 @@ export default function OverviewScreen() {
               <Text style={styles.emptySub}>點下方「新增」開始記帳</Text>
             </View>
           ) : (
-            recent.map(tx => <TransactionItem key={tx.id} item={tx} />)
+            recent.map(tx => (
+              <TransactionItem key={tx.id} item={tx} onEdit={setEditingTx} />
+            ))
           )}
         </View>
       </ScrollView>
+
+      <EditModal
+        visible={editingTx !== null}
+        transaction={editingTx}
+        onClose={() => setEditingTx(null)}
+        onSaved={load}
+      />
     </SafeAreaView>
   );
 }
@@ -161,54 +178,61 @@ export default function OverviewScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.bg },
   scroll: { flex: 1 },
-  content: { padding: 20, paddingBottom: 48 },
+  content: { padding: 20, paddingBottom: 100 },
+
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
-  greeting: { fontSize: 24, fontWeight: '800', color: COLORS.text },
+  greeting: { fontSize: 26, fontWeight: '800', color: COLORS.text },
   dateLabel: { fontSize: 13, color: COLORS.muted, marginTop: 2 },
+
   balanceCard: {
     backgroundColor: COLORS.dark,
-    borderRadius: 20,
+    borderRadius: 22,
     padding: 24,
     marginBottom: 14,
-    shadowColor: COLORS.dark,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.18,
+    shadowRadius: 20,
+    elevation: 10,
   },
-  balanceLabelTop: { fontSize: 13, color: 'rgba(255,255,255,0.55)', marginBottom: 10 },
-  balanceAmount: { fontSize: 40, fontWeight: '800', letterSpacing: -1 },
-  divider: { height: 1, backgroundColor: 'rgba(255,255,255,0.12)', marginVertical: 16 },
+  balanceLabelTop: { fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 10 },
+  balanceAmount: { fontSize: 42, fontWeight: '800', letterSpacing: -1 },
+  divider: { height: 1, backgroundColor: 'rgba(255,255,255,0.1)', marginVertical: 16 },
   balanceRow: { flexDirection: 'row', gap: 24 },
   balanceMeta: {},
-  balanceMetaLabel: { fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 4 },
+  balanceMetaLabel: { fontSize: 12, color: 'rgba(255,255,255,0.45)', marginBottom: 4 },
   balanceMetaAmt: { fontSize: 16, fontWeight: '700', color: '#fff' },
+
   row: { flexDirection: 'row', gap: 12, marginBottom: 12 },
   card: {
     backgroundColor: COLORS.card,
     borderRadius: 16,
     padding: 18,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
+    shadowOpacity: 0.05,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 2,
   },
   halfCard: { flex: 1 },
-  cardIcon: { fontSize: 18, color: COLORS.income, marginBottom: 6 },
+  cardIcon: { fontSize: 18, marginBottom: 6 },
   cardLabel: { fontSize: 12, color: COLORS.muted, marginBottom: 6 },
   cardAmt: { fontSize: 20, fontWeight: '700' },
+
   barHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
   barLabel: { fontSize: 13, fontWeight: '600', color: COLORS.text },
-  barPct: { fontSize: 13, fontWeight: '700', color: COLORS.muted },
-  barBg: { height: 8, backgroundColor: COLORS.border, borderRadius: 4, overflow: 'hidden' },
-  barFill: { height: 8, borderRadius: 4 },
+  barPct: { fontSize: 13, fontWeight: '700' },
+  barBg: { height: 7, backgroundColor: COLORS.border, borderRadius: 4, overflow: 'hidden' },
+  barFill: { height: 7, borderRadius: 4 },
   barSub: { fontSize: 11, color: COLORS.muted, marginTop: 8 },
+
   section: { marginTop: 4 },
   sectionTitle: { fontSize: 17, fontWeight: '700', color: COLORS.text, marginBottom: 12 },
   empty: { alignItems: 'center', paddingVertical: 48 },
-  emptyIcon: { fontSize: 52, marginBottom: 14 },
+  emptyIcon: { fontSize: 48, marginBottom: 14 },
   emptyTxt: { fontSize: 16, fontWeight: '600', color: COLORS.muted },
   emptySub: { fontSize: 13, color: COLORS.muted, marginTop: 6 },
 });

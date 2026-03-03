@@ -21,10 +21,10 @@ const chartConfigLine = {
   backgroundGradientFrom: '#fff',
   backgroundGradientTo: '#fff',
   decimalPlaces: 0,
-  color: (opacity = 1) => `rgba(231, 76, 60, ${opacity})`,
-  labelColor: (opacity = 1) => `rgba(127, 140, 141, ${opacity})`,
-  propsForDots: { r: '4', strokeWidth: '2', stroke: COLORS.expense },
-  propsForBackgroundLines: { strokeDasharray: '4', stroke: '#ECE9E0' },
+  color: (opacity = 1) => `rgba(99, 102, 241, ${opacity})`,
+  labelColor: (opacity = 1) => `rgba(107, 114, 128, ${opacity})`,
+  propsForDots: { r: '4', strokeWidth: '2', stroke: COLORS.accent },
+  propsForBackgroundLines: { strokeDasharray: '4', stroke: COLORS.border },
 };
 
 const chartConfigBar = {
@@ -32,9 +32,9 @@ const chartConfigBar = {
   backgroundGradientFrom: '#fff',
   backgroundGradientTo: '#fff',
   decimalPlaces: 0,
-  color: (opacity = 1) => `rgba(39, 174, 96, ${opacity})`,
-  labelColor: (opacity = 1) => `rgba(127, 140, 141, ${opacity})`,
-  propsForBackgroundLines: { strokeDasharray: '4', stroke: '#ECE9E0' },
+  color: (opacity = 1) => `rgba(16, 185, 129, ${opacity})`,
+  labelColor: (opacity = 1) => `rgba(107, 114, 128, ${opacity})`,
+  propsForBackgroundLines: { strokeDasharray: '4', stroke: COLORS.border },
 };
 
 export default function StatsScreen() {
@@ -124,7 +124,7 @@ export default function StatsScreen() {
         {/* Summary Cards */}
         <View style={styles.summaryRow}>
           <View style={[styles.summaryCard, { borderTopColor: COLORS.income }]}>
-            <Text style={styles.summaryIcon}>↑</Text>
+            <Text style={[styles.summaryIcon, { color: COLORS.income }]}>↑</Text>
             <Text style={styles.summaryLabel}>收入</Text>
             <Text style={[styles.summaryAmt, { color: COLORS.income }]}>
               {income > 0 ? `NT$${income.toLocaleString()}` : '—'}
@@ -197,7 +197,7 @@ export default function StatsScreen() {
                       <Text style={styles.incomeCatAmt}>NT${incomeCatTotals[c.key].toLocaleString()}</Text>
                     </View>
                     <View style={styles.incomeBarBg}>
-                      <View style={[styles.incomeBarFill, { width: `${Math.round(pct * 100)}%` as any, backgroundColor: c.color }]} />
+                      <View style={[styles.incomeBarFill, { width: `${Math.round(pct * 100)}%` as any, backgroundColor: COLORS.accent }]} />
                     </View>
                   </View>
                 </View>
@@ -264,14 +264,24 @@ export default function StatsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.bg },
-  content: { padding: 20, paddingBottom: 48 },
-  title: { fontSize: 24, fontWeight: '800', color: COLORS.text, marginBottom: 20 },
+  content: { padding: 20, paddingBottom: 100 },
+  title: { fontSize: 26, fontWeight: '800', color: COLORS.text, marginBottom: 20 },
 
   monthRow: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: COLORS.card, borderRadius: 14, paddingVertical: 6,
-    marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.card,
+    borderRadius: 14,
+    paddingVertical: 6,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
   },
   arrow: { paddingHorizontal: 20, paddingVertical: 6 },
   arrowTxt: { fontSize: 30, color: COLORS.accent, lineHeight: 34 },
@@ -279,23 +289,48 @@ const styles = StyleSheet.create({
 
   summaryRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
   summaryCard: {
-    flex: 1, backgroundColor: COLORS.card, borderRadius: 14, padding: 14,
-    borderTopWidth: 3, alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
+    flex: 1,
+    backgroundColor: COLORS.card,
+    borderRadius: 14,
+    padding: 14,
+    borderTopWidth: 3,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
   },
-  summaryIcon: { fontSize: 18, color: COLORS.income, marginBottom: 4 },
+  summaryIcon: { fontSize: 18, marginBottom: 4 },
   summaryLabel: { fontSize: 11, color: COLORS.muted, marginBottom: 6 },
   summaryAmt: { fontSize: 14, fontWeight: '700', textAlign: 'center' },
 
   chartCard: {
-    backgroundColor: COLORS.card, borderRadius: 18, padding: 20, marginBottom: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
+    backgroundColor: COLORS.card,
+    borderRadius: 18,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   chartTitle: { fontSize: 15, fontWeight: '700', color: COLORS.text, marginBottom: 16 },
   chart: { borderRadius: 12, marginLeft: -10 },
 
   legendList: { marginTop: 4 },
-  legendRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, borderTopWidth: 1, borderTopColor: COLORS.border },
+  legendRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
   legendDot: { width: 10, height: 10, borderRadius: 5, marginRight: 10 },
   legendName: { flex: 1, fontSize: 13, color: COLORS.text },
   legendAmt: { fontSize: 13, fontWeight: '600', color: COLORS.text, marginRight: 8 },
