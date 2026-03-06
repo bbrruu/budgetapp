@@ -6,7 +6,6 @@ import {
   StyleSheet,
   SafeAreaView,
   TouchableOpacity,
-  Alert,
   ScrollView,
   TextInput,
 } from 'react-native';
@@ -15,6 +14,7 @@ import { getTransactions, deleteTransaction } from '../storage';
 import { Transaction, TxType, COLORS } from '../types';
 import TransactionItem from '../components/TransactionItem';
 import EditModal from '../components/EditModal';
+import AppModal from '../components/AppModal';
 
 interface Group { date: string; txs: Transaction[] }
 
@@ -44,6 +44,7 @@ export default function HistoryScreen() {
   const [searchText, setSearchText] = useState('');
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const data = await getTransactions();
@@ -57,16 +58,7 @@ export default function HistoryScreen() {
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const handleDelete = (id: string) => {
-    Alert.alert('刪除記錄', '確定要刪除這筆記錄？', [
-      { text: '取消', style: 'cancel' },
-      {
-        text: '刪除', style: 'destructive',
-        onPress: async () => {
-          await deleteTransaction(id);
-          setTxs(prev => prev.filter(t => t.id !== id));
-        },
-      },
-    ]);
+    setPendingDeleteId(id);
   };
 
   const allMonths = [...new Set(txs.map(t => t.date.slice(0, 7)))].sort((a, b) => b.localeCompare(a));
@@ -214,6 +206,22 @@ export default function HistoryScreen() {
         transaction={editingTx}
         onClose={() => setEditingTx(null)}
         onSaved={load}
+      />
+
+      <AppModal
+        visible={pendingDeleteId !== null}
+        title="刪除記錄"
+        message="確定要刪除這筆記錄？"
+        confirmText="刪除"
+        danger
+        onConfirm={async () => {
+          if (pendingDeleteId) {
+            await deleteTransaction(pendingDeleteId);
+            setTxs(prev => prev.filter(t => t.id !== pendingDeleteId));
+          }
+          setPendingDeleteId(null);
+        }}
+        onCancel={() => setPendingDeleteId(null)}
       />
     </SafeAreaView>
   );

@@ -21,35 +21,35 @@ export interface BudgetSettings {
 }
 
 export const EXPENSE_CATS: Category[] = [
-  { key: '餐飲', icon: '🍜', color: '#FB923C' },
-  { key: '交通', icon: '🚌', color: '#60A5FA' },
-  { key: '購物', icon: '🛍️', color: '#A78BFA' },
-  { key: '娛樂', icon: '🎮', color: '#F472B6' },
-  { key: '住宿', icon: '🏠', color: '#FBBF24' },
-  { key: '醫療', icon: '💊', color: '#34D399' },
-  { key: '教育', icon: '📚', color: '#6366F1' },
-  { key: '其他', icon: '📦', color: '#9CA3AF' },
+  { key: '餐飲', icon: 'restaurant-outline', color: '#FB923C' },
+  { key: '交通', icon: 'car-outline', color: '#60A5FA' },
+  { key: '購物', icon: 'bag-outline', color: '#A78BFA' },
+  { key: '娛樂', icon: 'game-controller-outline', color: '#F472B6' },
+  { key: '住宿', icon: 'home-outline', color: '#FBBF24' },
+  { key: '醫療', icon: 'medkit-outline', color: '#34D399' },
+  { key: '教育', icon: 'book-outline', color: '#6366F1' },
+  { key: '其他', icon: 'grid-outline', color: '#9CA3AF' },
 ];
 
 export const INCOME_CATS: Category[] = [
-  { key: '薪資', icon: '💼', color: '#10B981' },
-  { key: '兼職', icon: '💻', color: '#6366F1' },
-  { key: '投資', icon: '📈', color: '#F59E0B' },
-  { key: '禮金', icon: '🎁', color: '#EC4899' },
-  { key: '其他', icon: '💰', color: '#94A3B8' },
+  { key: '薪資', icon: 'briefcase-outline', color: '#10B981' },
+  { key: '兼職', icon: 'laptop-outline', color: '#6366F1' },
+  { key: '投資', icon: 'trending-up-outline', color: '#F59E0B' },
+  { key: '禮金', icon: 'gift-outline', color: '#EC4899' },
+  { key: '其他', icon: 'wallet-outline', color: '#94A3B8' },
 ];
 
 export const COLORS = {
-  bg:      '#0F172A',       // 深夜藍
-  card:    'rgba(30, 41, 59, 0.8)',  // 毛玻璃卡片
-  cardSolid: '#1E293B',     // 實色卡片
-  income:  '#34D399',       // 翡翠綠
-  expense: '#F87171',       // 珊瑚紅
-  text:    '#F1F5F9',       // 柔白
-  muted:   '#94A3B8',       // 銀灰
-  border:  'rgba(148, 163, 184, 0.15)', // 半透明邊
-  accent:  '#818CF8',       // 薰衣草紫
-  accentCyan: '#22D3EE',    // 科技青
-  dark:    '#020617',       // 極深
-  glass:   'rgba(255,255,255,0.05)',  // 玻璃光澤
+  bg:        '#FAF7F2',      // 暖羊皮紙
+  card:      '#FFFFFF',      // 純白
+  cardSolid: '#F5F0E8',      // 暖奶油
+  income:    '#15803D',      // 森林綠
+  expense:   '#B91C1C',      // 磚紅
+  text:      '#292524',      // 暖墨黑
+  muted:     '#78716C',      // 暖石灰
+  border:    '#E8E0D6',      // 暖米邊框
+  accent:    '#B45309',      // 琥珀棕
+  accentCyan:'#0D9488',      // 暖青（進度條用）
+  dark:      '#1C1917',      // 暖近黑
+  glass:     'rgba(255,255,255,0.85)',
 };

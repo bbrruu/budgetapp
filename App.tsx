@@ -8,9 +8,10 @@ import OverviewScreen from './src/screens/OverviewScreen';
 import AddScreen from './src/screens/AddScreen';
 import StatsScreen from './src/screens/StatsScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
 import MobileFrame from './src/components/MobileFrame';
 
-type TabName = '概覽' | '新增' | '統計' | '紀錄';
+type TabName = '概覽' | '新增' | '統計' | '紀錄' | '設定';
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
 const ICONS: Record<TabName, [IoniconsName, IoniconsName]> = {
@@ -18,6 +19,7 @@ const ICONS: Record<TabName, [IoniconsName, IoniconsName]> = {
   '新增': ['add-circle', 'add-circle-outline'],
   '統計': ['bar-chart', 'bar-chart-outline'],
   '紀錄': ['list', 'list-outline'],
+  '設定': ['settings', 'settings-outline'],
 };
 
 const Tab = createBottomTabNavigator();
@@ -26,7 +28,7 @@ export default function App() {
   return (
     <MobileFrame>
       <NavigationContainer>
-        <StatusBar style="light" />
+        <StatusBar style="dark" />
         <Tab.Navigator
           screenOptions={({ route }) => ({
             headerShown: false,
@@ -37,18 +39,18 @@ export default function App() {
               right: 20,
               borderRadius: 28,
               height: 64,
-              backgroundColor: 'rgba(15, 23, 42, 0.95)',
+              backgroundColor: 'rgba(255, 252, 247, 0.97)',
               borderTopWidth: 0,
               borderWidth: 1,
-              borderColor: 'rgba(148, 163, 184, 0.12)',
-              shadowColor: '#818CF8',
+              borderColor: '#E8E0D6',
+              shadowColor: '#292524',
               shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.15,
+              shadowOpacity: 0.08,
               shadowRadius: 20,
               elevation: 10,
             },
-            tabBarActiveTintColor: '#818CF8',
-            tabBarInactiveTintColor: '#64748B',
+            tabBarActiveTintColor: '#B45309',
+            tabBarInactiveTintColor: '#A39280',
             tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
             tabBarIcon: ({ focused, color, size }) => {
               const name = route.name as TabName;
@@ -61,6 +63,7 @@ export default function App() {
           <Tab.Screen name="新增" component={AddScreen} />
           <Tab.Screen name="統計" component={StatsScreen} />
           <Tab.Screen name="紀錄" component={HistoryScreen} />
+          <Tab.Screen name="設定" component={SettingsScreen} />
         </Tab.Navigator>
       </NavigationContainer>
     </MobileFrame>

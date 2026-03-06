@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Transaction, EXPENSE_CATS, INCOME_CATS, COLORS } from '../types';
 import { formatDateShort } from '../storage';
 
@@ -22,8 +23,8 @@ export default function TransactionItem({ item, onDelete, onEdit }: Props) {
         onPress={() => onEdit?.(item)}
         activeOpacity={onEdit ? 0.7 : 1}
       >
-        <View style={[styles.iconBg, { backgroundColor: cat.color + '20' }]}>
-          <Text style={styles.icon}>{cat.icon}</Text>
+        <View style={[styles.iconBg, { backgroundColor: cat.color + '25' }]}>
+          <Ionicons name={cat.icon as any} size={20} color={cat.color} />
         </View>
         <View style={styles.info}>
           <Text style={styles.category}>{item.category}</Text>
@@ -79,7 +80,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  icon: { fontSize: 20 },
   info: { flex: 1, marginLeft: 12 },
   category: { fontSize: 14, fontWeight: '600', color: COLORS.text },
   note: { fontSize: 12, color: COLORS.muted, marginTop: 2 },

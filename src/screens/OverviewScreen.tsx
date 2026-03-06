@@ -7,15 +7,14 @@ import {
   SafeAreaView,
   RefreshControl,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
-import { getTransactions, getBudgetSettings, clearAllData } from '../storage';
+import { getTransactions, getBudgetSettings, deleteTransaction } from '../storage';
 import { Transaction, BudgetSettings, COLORS } from '../types';
 import TransactionItem from '../components/TransactionItem';
 import EditModal from '../components/EditModal';
-import BudgetModal from '../components/BudgetModal';
+import AppModal from '../components/AppModal';
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
 
@@ -24,7 +23,7 @@ export default function OverviewScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [budgetSettings, setBudgetSettings] = useState<BudgetSettings>({ monthlyBudget: 0 });
-  const [showBudgetModal, setShowBudgetModal] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setTxs(await getTransactions());
@@ -54,21 +53,20 @@ export default function OverviewScreen() {
 
   const greeting = () => {
     const h = now.getHours();
-    if (h < 6) return '🌙 深夜了';
-    if (h < 12) return '☀️ 早安';
-    if (h < 14) return '🌤️ 午安';
-    if (h < 18) return '🌇 下午好';
-    return '🌃 晚安';
+    if (h < 6) return '深夜了';
+    if (h < 12) return '早安';
+    if (h < 14) return '午安';
+    if (h < 18) return '下午好';
+    return '晚安';
   };
 
-  // Budget-based progress
   const hasBudget = budgetSettings.monthlyBudget > 0;
   const budgetBase = hasBudget ? budgetSettings.monthlyBudget : monthIncome;
   const progressPct = budgetBase > 0
     ? Math.min(monthExpense / budgetBase, 1)
     : monthExpense > 0 ? 1 : 0;
 
-  const progressColor = progressPct > 0.9 ? COLORS.expense : progressPct > 0.7 ? '#FBBF24' : COLORS.accentCyan;
+  const progressColor = progressPct > 0.9 ? COLORS.expense : progressPct > 0.7 ? '#D97706' : COLORS.accentCyan;
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -87,24 +85,23 @@ export default function OverviewScreen() {
 
         {/* Balance Card */}
         <LinearGradient
-          colors={['rgba(129, 140, 248, 0.15)', 'rgba(34, 211, 238, 0.08)', 'rgba(15, 23, 42, 0)']}
+          colors={['rgba(180, 83, 9, 0.07)', 'rgba(21, 128, 61, 0.04)', 'rgba(250, 247, 242, 0)']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.balanceCard}
         >
           <Text style={styles.balanceLabel}>總資產餘額</Text>
           <Text style={styles.balanceAmount}>
-            <Text style={{ color: COLORS.muted, fontSize: 24 }}>NT$ </Text>
+            <Text style={{ color: COLORS.muted, fontSize: 22 }}>NT$ </Text>
             <Text style={{ color: totalBalance >= 0 ? COLORS.text : COLORS.expense }}>
               {Math.abs(totalBalance).toLocaleString()}
             </Text>
           </Text>
 
-          {/* Inline income / expense */}
           <View style={styles.inlineRow}>
             <View style={styles.inlineItem}>
               <View style={[styles.dot, { backgroundColor: COLORS.income }]} />
-              <Text style={styles.inlineLabel}>收入</Text>
+              <Text style={styles.inlineLabel}>本月收入</Text>
               <Text style={[styles.inlineAmt, { color: COLORS.income }]}>
                 +{monthIncome.toLocaleString()}
               </Text>
@@ -112,7 +109,7 @@ export default function OverviewScreen() {
             <View style={styles.inlineDivider} />
             <View style={styles.inlineItem}>
               <View style={[styles.dot, { backgroundColor: COLORS.expense }]} />
-              <Text style={styles.inlineLabel}>支出</Text>
+              <Text style={styles.inlineLabel}>本月支出</Text>
               <Text style={[styles.inlineAmt, { color: COLORS.expense }]}>
                 -{monthExpense.toLocaleString()}
               </Text>
@@ -132,11 +129,11 @@ export default function OverviewScreen() {
               </Text>
             </View>
             <View style={styles.progressBg}>
-              <LinearGradient
-                colors={[progressColor, progressColor + '80']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={[styles.progressFill, { width: `${Math.round(progressPct * 100)}%` as any }]}
+              <View
+                style={[styles.progressFill, {
+                  width: `${Math.round(progressPct * 100)}%` as any,
+                  backgroundColor: progressColor,
+                }]}
               />
             </View>
             <Text style={styles.progressSub}>
@@ -147,43 +144,6 @@ export default function OverviewScreen() {
             </Text>
           </View>
         )}
-
-        {/* Action Buttons */}
-        <View style={styles.actionRow}>
-          <TouchableOpacity
-            style={[styles.actionBtn, { flex: 1 }]}
-            onPress={() => setShowBudgetModal(true)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.actionBtnIcon}>🎯</Text>
-            <Text style={styles.actionBtnTxt}>
-              {hasBudget ? `預算 $${budgetSettings.monthlyBudget.toLocaleString()}` : '設定預算'}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.actionBtn}
-            onPress={() => {
-              Alert.alert(
-                '重置所有資料',
-                '確定要刪除所有記帳記錄和預算設定嗎？此操作無法復原。',
-                [
-                  { text: '取消', style: 'cancel' },
-                  {
-                    text: '確認重置', style: 'destructive',
-                    onPress: async () => {
-                      await clearAllData();
-                      await load();
-                    },
-                  },
-                ]
-              );
-            }}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.actionBtnIcon}>🔄</Text>
-            <Text style={[styles.actionBtnTxt, { color: COLORS.expense }]}>重置</Text>
-          </TouchableOpacity>
-        </View>
 
         {/* Recent */}
         <View style={styles.section}>
@@ -196,7 +156,12 @@ export default function OverviewScreen() {
             </View>
           ) : (
             recent.map(tx => (
-              <TransactionItem key={tx.id} item={tx} onEdit={setEditingTx} />
+              <TransactionItem
+                key={tx.id}
+                item={tx}
+                onEdit={setEditingTx}
+                onDelete={id => setPendingDeleteId(id)}
+              />
             ))
           )}
         </View>
@@ -209,10 +174,18 @@ export default function OverviewScreen() {
         onSaved={load}
       />
 
-      <BudgetModal
-        visible={showBudgetModal}
-        onClose={() => setShowBudgetModal(false)}
-        onSaved={load}
+      <AppModal
+        visible={pendingDeleteId !== null}
+        title="刪除記錄"
+        message="確定要刪除這筆記錄？"
+        confirmText="刪除"
+        danger
+        onConfirm={async () => {
+          if (pendingDeleteId) await deleteTransaction(pendingDeleteId);
+          setPendingDeleteId(null);
+          await load();
+        }}
+        onCancel={() => setPendingDeleteId(null)}
       />
     </SafeAreaView>
   );
@@ -227,7 +200,6 @@ const styles = StyleSheet.create({
   greeting: { fontSize: 28, fontWeight: '800', color: COLORS.text, letterSpacing: -0.5 },
   dateLabel: { fontSize: 13, color: COLORS.muted, marginTop: 4 },
 
-  // Balance
   balanceCard: {
     borderRadius: 20,
     padding: 24,
@@ -235,48 +207,43 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
   },
-  balanceLabel: { fontSize: 12, color: COLORS.muted, marginBottom: 8, letterSpacing: 1, textTransform: 'uppercase' },
+  balanceLabel: {
+    fontSize: 11,
+    color: COLORS.muted,
+    marginBottom: 8,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    fontWeight: '600',
+  },
   balanceAmount: { fontSize: 38, fontWeight: '800', color: COLORS.text, letterSpacing: -1, marginBottom: 20 },
 
   inlineRow: { flexDirection: 'row', alignItems: 'center' },
   inlineItem: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   inlineDivider: { width: 1, height: 24, backgroundColor: COLORS.border, marginHorizontal: 12 },
-  dot: { width: 8, height: 8, borderRadius: 4, marginRight: 8 },
+  dot: { width: 7, height: 7, borderRadius: 4, marginRight: 8 },
   inlineLabel: { fontSize: 12, color: COLORS.muted, marginRight: 8 },
-  inlineAmt: { fontSize: 15, fontWeight: '700' },
+  inlineAmt: { fontSize: 14, fontWeight: '700' },
 
-  // Progress
   progressCard: {
     backgroundColor: COLORS.card,
     borderRadius: 16,
     padding: 18,
-    marginBottom: 12,
+    marginBottom: 20,
     borderWidth: 1,
     borderColor: COLORS.border,
   },
   progressHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
   progressLabel: { fontSize: 13, fontWeight: '600', color: COLORS.text },
   progressPct: { fontSize: 13, fontWeight: '700' },
-  progressBg: { height: 6, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' },
+  progressBg: {
+    height: 6,
+    backgroundColor: COLORS.border,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
   progressFill: { height: 6, borderRadius: 3 },
   progressSub: { fontSize: 11, color: COLORS.muted, marginTop: 8 },
 
-  // Action Buttons
-  actionRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
-  actionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.card,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  actionBtnIcon: { fontSize: 16, marginRight: 8 },
-  actionBtnTxt: { fontSize: 13, fontWeight: '700', color: COLORS.text },
-
-  // Section
   section: { marginTop: 4 },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: COLORS.text, marginBottom: 12, letterSpacing: 0.3 },
   empty: { alignItems: 'center', paddingVertical: 40 },

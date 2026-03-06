@@ -50,6 +50,11 @@ export async function saveBudgetSettings(settings: BudgetSettings): Promise<void
   await AsyncStorage.setItem(BUDGET_KEY, JSON.stringify(settings));
 }
 
+// Clear all transaction records (keeps budget settings)
+export async function clearTransactions(): Promise<void> {
+  await AsyncStorage.removeItem(KEY);
+}
+
 // Clear all data
 export async function clearAllData(): Promise<void> {
   await AsyncStorage.multiRemove([KEY, BUDGET_KEY]);

@@ -7,15 +7,12 @@ import {
   SafeAreaView,
   TouchableOpacity,
   Dimensions,
-  Platform,
-  Alert,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { PieChart, LineChart, BarChart } from 'react-native-chart-kit';
-import { getTransactions, generateCSV } from '../storage';
+import { Ionicons } from '@expo/vector-icons';
+import { getTransactions } from '../storage';
 import { Transaction, EXPENSE_CATS, INCOME_CATS, COLORS } from '../types';
-import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
 
 const W = Dimensions.get('window').width;
 const CHART_W = Math.min(W - 48, 345);
@@ -34,10 +31,10 @@ const chartConfigLine = {
   backgroundGradientFrom: COLORS.cardSolid,
   backgroundGradientTo: COLORS.cardSolid,
   decimalPlaces: 0,
-  color: (opacity = 1) => `rgba(129, 140, 248, ${opacity})`,
-  labelColor: (opacity = 1) => `rgba(148, 163, 184, ${opacity})`,
+  color: (opacity = 1) => `rgba(180, 83, 9, ${opacity})`,
+  labelColor: (opacity = 1) => `rgba(120, 113, 108, ${opacity})`,
   propsForDots: { r: '4', strokeWidth: '2', stroke: COLORS.accent },
-  propsForBackgroundLines: { strokeDasharray: '4', stroke: 'rgba(148, 163, 184, 0.1)' },
+  propsForBackgroundLines: { strokeDasharray: '4', stroke: 'rgba(232, 224, 214, 0.8)' },
 };
 
 const chartConfigBar = {
@@ -45,9 +42,9 @@ const chartConfigBar = {
   backgroundGradientFrom: COLORS.cardSolid,
   backgroundGradientTo: COLORS.cardSolid,
   decimalPlaces: 0,
-  color: (opacity = 1) => `rgba(52, 211, 153, ${opacity})`,
-  labelColor: (opacity = 1) => `rgba(148, 163, 184, ${opacity})`,
-  propsForBackgroundLines: { strokeDasharray: '4', stroke: 'rgba(148, 163, 184, 0.1)' },
+  color: (opacity = 1) => `rgba(21, 128, 61, ${opacity})`,
+  labelColor: (opacity = 1) => `rgba(120, 113, 108, ${opacity})`,
+  propsForBackgroundLines: { strokeDasharray: '4', stroke: 'rgba(232, 224, 214, 0.8)' },
 };
 
 // Helper: get date range for each period
@@ -162,7 +159,6 @@ function getTrendData(txs: Transaction[], period: TimePeriod) {
 export default function StatsScreen() {
   const [txs, setTxs] = useState<Transaction[]>([]);
   const [period, setPeriod] = useState<TimePeriod>('month');
-  const [exporting, setExporting] = useState(false);
 
   const load = useCallback(async () => {
     setTxs(await getTransactions());
@@ -177,7 +173,6 @@ export default function StatsScreen() {
   const expense = filtered.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
   const net = income - expense;
 
-  // Pie: expense by category
   const catTotals: Record<string, number> = {};
   filtered.filter(t => t.type === 'expense').forEach(t => {
     catTotals[t.category] = (catTotals[t.category] || 0) + t.amount;
@@ -192,50 +187,14 @@ export default function StatsScreen() {
       legendFontSize: 12,
     }));
 
-  // Trend data
   const trend = useMemo(() => getTrendData(txs, period), [txs, period]);
   const hasExpenseTrend = trend.expenseValues.some(v => v > 0);
   const hasIncomeTrend = trend.incomeValues.some(v => v > 0);
 
-  // Income categories
   const incomeCatTotals: Record<string, number> = {};
   filtered.filter(t => t.type === 'income').forEach(t => {
     incomeCatTotals[t.category] = (incomeCatTotals[t.category] || 0) + t.amount;
   });
-
-  // CSV Export
-  const handleExport = async () => {
-    if (filtered.length === 0) {
-      Alert.alert('提示', '此期間沒有記錄可以匯出');
-      return;
-    }
-    setExporting(true);
-    try {
-      const csv = generateCSV(filtered);
-      const filename = `記帳報表_${periodLabel}.csv`;
-      if (Platform.OS === 'web') {
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        link.click();
-        URL.revokeObjectURL(url);
-        Alert.alert('匯出成功', `${filename} 已下載`);
-      } else {
-        const filePath = `${FileSystem.cacheDirectory}${filename}`;
-        await FileSystem.writeAsStringAsync(filePath, csv, { encoding: FileSystem.EncodingType.UTF8 });
-        const canShare = await Sharing.isAvailableAsync();
-        if (canShare) {
-          await Sharing.shareAsync(filePath, { mimeType: 'text/csv', UTI: 'public.comma-separated-values-text' });
-        }
-      }
-    } catch {
-      Alert.alert('匯出失敗', '請稍後再試');
-    } finally {
-      setExporting(false);
-    }
-  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -243,12 +202,7 @@ export default function StatsScreen() {
         {/* Header */}
         <View style={styles.headerRow}>
           <Text style={styles.title}>統計分析</Text>
-          <TouchableOpacity
-            style={[styles.exportBtn, exporting && { opacity: 0.5 }]}
-            onPress={handleExport} activeOpacity={0.7} disabled={exporting}
-          >
-            <Text style={styles.exportTxt}>{exporting ? '匯出中...' : '📤 匯出'}</Text>
-          </TouchableOpacity>
+          <Text style={styles.periodSubLabel}>{periodLabel}</Text>
         </View>
 
         {/* Time Period Tabs */}
@@ -266,9 +220,6 @@ export default function StatsScreen() {
             </TouchableOpacity>
           ))}
         </View>
-
-        {/* Period Label */}
-        <Text style={styles.periodLabel}>{periodLabel}</Text>
 
         {/* Summary Cards */}
         <View style={styles.summaryRow}>
@@ -334,7 +285,7 @@ export default function StatsScreen() {
               const pct = incomeCatTotals[c.key] / income;
               return (
                 <View key={c.key} style={styles.incomeRow}>
-                  <Text style={styles.incomeIcon}>{c.icon}</Text>
+                  <Ionicons name={c.icon as any} size={22} color={c.color} style={styles.incomeIcon} />
                   <View style={styles.incomeBarWrap}>
                     <View style={styles.incomeBarHeader}>
                       <Text style={styles.incomeCatName}>{c.key}</Text>
@@ -413,19 +364,11 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     marginBottom: 16,
   },
   title: { fontSize: 26, fontWeight: '800', color: COLORS.text, letterSpacing: -0.3 },
-  exportBtn: {
-    backgroundColor: COLORS.card,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  exportTxt: { fontSize: 13, fontWeight: '700', color: COLORS.accent },
+  periodSubLabel: { fontSize: 13, color: COLORS.muted, fontWeight: '500', paddingBottom: 3 },
 
   // Time Period Tabs
   tabRow: {
@@ -448,14 +391,6 @@ const styles = StyleSheet.create({
   },
   tabTxt: { fontSize: 14, fontWeight: '700', color: COLORS.muted },
   tabActiveTxt: { color: '#fff' },
-
-  periodLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.muted,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
 
   summaryRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
   summaryCard: {
@@ -496,7 +431,7 @@ const styles = StyleSheet.create({
   legendPct: { fontSize: 12, color: COLORS.muted, minWidth: 36, textAlign: 'right' },
 
   incomeRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
-  incomeIcon: { fontSize: 22, marginRight: 12 },
+  incomeIcon: { marginRight: 12 },
   incomeBarWrap: { flex: 1 },
   incomeBarHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
   incomeCatName: { fontSize: 13, fontWeight: '600', color: COLORS.text },

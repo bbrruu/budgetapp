@@ -10,6 +10,7 @@ import {
   Alert,
   Animated,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { saveTransaction, toDateStr } from '../storage';
 import { TxType, Transaction, EXPENSE_CATS, INCOME_CATS, COLORS } from '../types';
 import DatePickerField from '../components/DatePickerField';
@@ -57,7 +58,11 @@ function AnimatedCatButton({
         onPress={handlePress}
         activeOpacity={0.8}
       >
-        <Text style={styles.catIcon}>{cat.icon}</Text>
+        <Ionicons
+          name={cat.icon as any}
+          size={24}
+          color={selected ? COLORS.accent : cat.color}
+        />
         <Text style={[styles.catLabel, selected && { color: COLORS.accent, fontWeight: '700' }]}>
           {cat.key}
         </Text>
@@ -153,7 +158,6 @@ export default function AddScreen() {
               placeholder="0"
               placeholderTextColor={COLORS.muted + '40'}
               maxLength={12}
-              autoFocus
             />
           </View>
         </View>
@@ -252,7 +256,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
   },
-  catIcon: { fontSize: 24, marginBottom: 4 },
+  catIcon: { marginBottom: 4 },
   catLabel: { fontSize: 11, color: COLORS.text, fontWeight: '500' },
 
   fieldRow: {
