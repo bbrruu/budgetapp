@@ -23,12 +23,13 @@ export default function DatePickerField({ value, onChange }: Props) {
           flex: 1,
           fontSize: 15,
           fontWeight: '600',
-          color: COLORS.text,
+          color: '#F1F5F9',
           border: 'none',
           background: 'transparent',
           outline: 'none',
           cursor: 'pointer',
           fontFamily: 'inherit',
+          colorScheme: 'dark',
         } as React.CSSProperties}
       />
     </View>
@@ -40,6 +41,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: COLORS.card, borderRadius: 14,
     paddingHorizontal: 16, paddingVertical: 14,
+    borderWidth: 1, borderColor: COLORS.border,
   },
   icon: { fontSize: 18, marginRight: 12 },
 });

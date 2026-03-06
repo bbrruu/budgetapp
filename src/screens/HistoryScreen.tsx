@@ -71,25 +71,16 @@ export default function HistoryScreen() {
 
   const allMonths = [...new Set(txs.map(t => t.date.slice(0, 7)))].sort((a, b) => b.localeCompare(a));
 
-  // Apply month filter
   let filtered = selMonth ? txs.filter(t => t.date.startsWith(selMonth)) : txs;
-
-  // Apply type filter
-  if (filterType !== 'all') {
-    filtered = filtered.filter(t => t.type === filterType);
-  }
-
-  // Apply search filter
+  if (filterType !== 'all') filtered = filtered.filter(t => t.type === filterType);
   if (searchText.trim()) {
     const q = searchText.trim().toLowerCase();
     filtered = filtered.filter(t =>
-      t.category.toLowerCase().includes(q) ||
-      t.note.toLowerCase().includes(q)
+      t.category.toLowerCase().includes(q) || t.note.toLowerCase().includes(q)
     );
   }
 
   const groups = groupByDate(filtered);
-
   const monthTotalIncome = filtered.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
   const monthTotalExpense = filtered.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
 
@@ -133,7 +124,7 @@ export default function HistoryScreen() {
           value={searchText}
           onChangeText={setSearchText}
           placeholder="搜尋類別或備註..."
-          placeholderTextColor={COLORS.muted}
+          placeholderTextColor={COLORS.muted + '80'}
           returnKeyType="search"
           clearButtonMode="while-editing"
         />
@@ -158,13 +149,13 @@ export default function HistoryScreen() {
       {filtered.length > 0 && (
         <View style={styles.summaryBar}>
           <Text style={styles.summaryBarItem}>
-            <Text style={{ color: COLORS.income, fontWeight: '700' }}>↑ NT${monthTotalIncome.toLocaleString()}</Text>
+            <Text style={{ color: COLORS.income, fontWeight: '700' }}>↑ {monthTotalIncome.toLocaleString()}</Text>
           </Text>
-          <Text style={styles.summaryBarDivider}>｜</Text>
+          <Text style={styles.summaryBarDivider}>│</Text>
           <Text style={styles.summaryBarItem}>
-            <Text style={{ color: COLORS.expense, fontWeight: '700' }}>↓ NT${monthTotalExpense.toLocaleString()}</Text>
+            <Text style={{ color: COLORS.expense, fontWeight: '700' }}>↓ {monthTotalExpense.toLocaleString()}</Text>
           </Text>
-          <Text style={styles.summaryBarDivider}>｜</Text>
+          <Text style={styles.summaryBarDivider}>│</Text>
           <Text style={styles.summaryBarItem}>
             <Text style={{ color: COLORS.muted }}>{filtered.length} 筆</Text>
           </Text>
@@ -232,7 +223,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.bg },
 
   tabsWrap: {
-    backgroundColor: COLORS.card,
+    backgroundColor: COLORS.cardSolid,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
@@ -241,7 +232,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 7,
     borderRadius: 20,
-    backgroundColor: COLORS.bg,
+    backgroundColor: COLORS.card,
     borderWidth: 1,
     borderColor: COLORS.border,
   },
@@ -261,11 +252,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderWidth: 1,
     borderColor: COLORS.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
   },
   searchIcon: { fontSize: 16, marginRight: 8 },
   searchInput: { flex: 1, fontSize: 15, color: COLORS.text, padding: 0 },
@@ -315,7 +301,7 @@ const styles = StyleSheet.create({
   dateSums: { fontSize: 13 },
 
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80 },
-  emptyEmoji: { fontSize: 52, marginBottom: 14 },
+  emptyEmoji: { fontSize: 48, marginBottom: 14 },
   emptyTxt: { fontSize: 16, fontWeight: '600', color: COLORS.muted },
-  emptySub: { fontSize: 13, color: COLORS.muted, marginTop: 6 },
+  emptySub: { fontSize: 13, color: COLORS.muted, marginTop: 6, opacity: 0.7 },
 });

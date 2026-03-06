@@ -16,6 +16,10 @@ export interface Category {
   color: string;
 }
 
+export interface BudgetSettings {
+  monthlyBudget: number;
+}
+
 export const EXPENSE_CATS: Category[] = [
   { key: '餐飲', icon: '🍜', color: '#FB923C' },
   { key: '交通', icon: '🚌', color: '#60A5FA' },
@@ -36,13 +40,16 @@ export const INCOME_CATS: Category[] = [
 ];
 
 export const COLORS = {
-  bg:      '#FAFAF9',
-  card:    '#FFFFFF',
-  income:  '#10B981',
-  expense: '#EF4444',
-  text:    '#111827',
-  muted:   '#6B7280',
-  border:  '#F3F4F6',
-  accent:  '#6366F1',
-  dark:    '#111827',
+  bg:      '#0F172A',       // 深夜藍
+  card:    'rgba(30, 41, 59, 0.8)',  // 毛玻璃卡片
+  cardSolid: '#1E293B',     // 實色卡片
+  income:  '#34D399',       // 翡翠綠
+  expense: '#F87171',       // 珊瑚紅
+  text:    '#F1F5F9',       // 柔白
+  muted:   '#94A3B8',       // 銀灰
+  border:  'rgba(148, 163, 184, 0.15)', // 半透明邊
+  accent:  '#818CF8',       // 薰衣草紫
+  accentCyan: '#22D3EE',    // 科技青
+  dark:    '#020617',       // 極深
+  glass:   'rgba(255,255,255,0.05)',  // 玻璃光澤
 };

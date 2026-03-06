@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,10 +8,63 @@ import {
   StyleSheet,
   SafeAreaView,
   Alert,
+  Animated,
 } from 'react-native';
 import { saveTransaction, toDateStr } from '../storage';
 import { TxType, Transaction, EXPENSE_CATS, INCOME_CATS, COLORS } from '../types';
 import DatePickerField from '../components/DatePickerField';
+import SuccessToast from '../components/SuccessToast';
+
+function AnimatedCatButton({
+  cat,
+  selected,
+  onPress,
+}: {
+  cat: { key: string; icon: string; color: string };
+  selected: boolean;
+  onPress: () => void;
+}) {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const handlePress = () => {
+    Animated.sequence([
+      Animated.spring(scale, {
+        toValue: 0.88,
+        friction: 3,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scale, {
+        toValue: 1,
+        friction: 4,
+        tension: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    onPress();
+  };
+
+  return (
+    <Animated.View style={{ width: '22%', transform: [{ scale }] }}>
+      <TouchableOpacity
+        style={[
+          styles.catBtn,
+          selected && {
+            backgroundColor: COLORS.accent + '25',
+            borderColor: COLORS.accent,
+            borderWidth: 1.5,
+          },
+        ]}
+        onPress={handlePress}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.catIcon}>{cat.icon}</Text>
+        <Text style={[styles.catLabel, selected && { color: COLORS.accent, fontWeight: '700' }]}>
+          {cat.key}
+        </Text>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
 
 export default function AddScreen() {
   const [type, setType] = useState<TxType>('expense');
@@ -19,6 +72,8 @@ export default function AddScreen() {
   const [category, setCategory] = useState('');
   const [note, setNote] = useState('');
   const [date, setDate] = useState(new Date());
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMsg, setToastMsg] = useState('');
 
   const cats = type === 'expense' ? EXPENSE_CATS : INCOME_CATS;
 
@@ -50,9 +105,14 @@ export default function AddScreen() {
       createdAt: new Date().toISOString(),
     };
     await saveTransaction(tx);
-    Alert.alert('記帳完成', `${type === 'expense' ? '支出' : '收入'} NT$${num.toLocaleString()} 已儲存`, [
-      { text: '繼續記帳', onPress: reset },
-    ]);
+    const typeLabel = type === 'expense' ? '支出' : '收入';
+    setToastMsg(`${typeLabel} NT$${num.toLocaleString()} — ${category}`);
+    setToastVisible(true);
+  };
+
+  const handleToastHide = () => {
+    setToastVisible(false);
+    reset();
   };
 
   const handleTypeChange = (t: TxType) => {
@@ -62,10 +122,10 @@ export default function AddScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>新增記帳</Text>
 
-        {/* Type Toggle — Pill Segmented Control */}
+        {/* Type Toggle */}
         <View style={styles.toggleWrap}>
           {(['expense', 'income'] as TxType[]).map(t => (
             <TouchableOpacity
@@ -86,12 +146,12 @@ export default function AddScreen() {
           <View style={styles.amountRow}>
             <Text style={[styles.currency, { color: COLORS.accent }]}>$</Text>
             <TextInput
-              style={[styles.amountInput, { color: COLORS.accent }]}
+              style={[styles.amountInput, { color: COLORS.text }]}
               value={amount}
               onChangeText={setAmount}
               keyboardType="decimal-pad"
               placeholder="0"
-              placeholderTextColor={COLORS.border}
+              placeholderTextColor={COLORS.muted + '40'}
               maxLength={12}
               autoFocus
             />
@@ -102,28 +162,14 @@ export default function AddScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>類別</Text>
           <View style={styles.catGrid}>
-            {cats.map(cat => {
-              const selected = category === cat.key;
-              return (
-                <TouchableOpacity
-                  key={cat.key}
-                  style={[
-                    styles.catBtn,
-                    selected && {
-                      backgroundColor: COLORS.accent + '18',
-                      borderColor: COLORS.accent,
-                      borderWidth: 2,
-                    },
-                  ]}
-                  onPress={() => setCategory(cat.key)}
-                >
-                  <Text style={styles.catIcon}>{cat.icon}</Text>
-                  <Text style={[styles.catLabel, selected && { color: COLORS.accent, fontWeight: '700' }]}>
-                    {cat.key}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+            {cats.map(cat => (
+              <AnimatedCatButton
+                key={cat.key}
+                cat={cat}
+                selected={category === cat.key}
+                onPress={() => setCategory(cat.key)}
+              />
+            ))}
           </View>
         </View>
 
@@ -143,29 +189,27 @@ export default function AddScreen() {
               value={note}
               onChangeText={setNote}
               placeholder="輸入備註..."
-              placeholderTextColor={COLORS.muted}
+              placeholderTextColor={COLORS.muted + '80'}
               maxLength={60}
             />
           </View>
         </View>
 
         {/* Save Button */}
-        <TouchableOpacity
-          style={styles.saveBtn}
-          onPress={handleSave}
-          activeOpacity={0.85}
-        >
+        <TouchableOpacity style={styles.saveBtn} onPress={handleSave} activeOpacity={0.85}>
           <Text style={styles.saveTxt}>確認記帳</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <SuccessToast visible={toastVisible} message={toastMsg} onHide={handleToastHide} />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.bg },
-  content: { padding: 20, paddingBottom: 100 },
-  title: { fontSize: 26, fontWeight: '800', color: COLORS.text, marginBottom: 20 },
+  content: { flexGrow: 1, padding: 20, paddingBottom: 100 },
+  title: { fontSize: 26, fontWeight: '800', color: COLORS.text, marginBottom: 20, letterSpacing: -0.3 },
 
   toggleWrap: {
     flexDirection: 'row',
@@ -175,11 +219,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderWidth: 1,
     borderColor: COLORS.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
   },
   toggleBtn: { flex: 1, paddingVertical: 11, borderRadius: 11, alignItems: 'center' },
   toggleBtnActive: { backgroundColor: COLORS.accent },
@@ -193,23 +232,18 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     borderWidth: 1,
     borderColor: COLORS.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
   },
   amountHint: { fontSize: 12, color: COLORS.muted, marginBottom: 8 },
   amountRow: { flexDirection: 'row', alignItems: 'center' },
   currency: { fontSize: 32, fontWeight: '700', marginRight: 4 },
-  amountInput: { fontSize: 48, fontWeight: '800', flex: 1, padding: 0 },
+  amountInput: { fontSize: 44, fontWeight: '800', flex: 1, padding: 0 },
 
   section: { marginBottom: 20 },
   sectionLabel: { fontSize: 14, fontWeight: '700', color: COLORS.text, marginBottom: 10 },
 
   catGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   catBtn: {
-    width: '22%',
+    width: '100%',
     aspectRatio: 1,
     backgroundColor: COLORS.card,
     borderRadius: 14,
@@ -217,11 +251,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: COLORS.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
   },
   catIcon: { fontSize: 24, marginBottom: 4 },
   catLabel: { fontSize: 11, color: COLORS.text, fontWeight: '500' },
@@ -247,8 +276,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
     shadowColor: COLORS.accent,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
     elevation: 5,
   },
   saveTxt: { fontSize: 18, fontWeight: '800', color: '#fff', letterSpacing: 0.5 },
